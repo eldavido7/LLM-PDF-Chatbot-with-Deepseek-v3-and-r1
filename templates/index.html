@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4CAF50;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 300px;
+        }
+
+        textarea {
+            width: 300px;
+            height: 100px;
+            padding: 10px;
+        }
+
+        .response {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>PDF Chatbot</h1>
+
+    <!-- PDF Upload Form -->
+    <div class="form-container">
+        <label for="pdf-file">Upload PDF:</label>
+        <input type="file" id="pdf-file" name="file" accept="application/pdf">
+        <button onclick="uploadPdf()">Upload PDF</button>
+    </div>
+
+    <!-- Question Form -->
+    <div class="form-container">
+        <label for="question">Ask a question:</label>
+        <input type="text" id="question" placeholder="Enter your question">
+        <button onclick="askQuestion()">Ask</button>
+    </div>
+
+    <!-- Response -->
+    <div class="response" id="response"></div>
+
+    <script>
+        // Function to handle PDF upload
+        async function uploadPdf() {
+            const fileInput = document.getElementById('pdf-file');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = "Uploading PDF...";
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    responseDiv.textContent = "PDF uploaded and processed! You can now ask questions.";
+                } else {
+                    responseDiv.textContent = "Error: " + result.error;
+                }
+            } catch (error) {
+                responseDiv.textContent = "Error uploading PDF: " + error.message;
+            }
+        }
+
+        // Function to ask a question
+        async function askQuestion() {
+            const question = document.getElementById('question').value;
+            const responseDiv = document.getElementById('response');
+
+            if (!question) {
+                responseDiv.textContent = "Please enter a question.";
+                return;
+            }
+
+            responseDiv.textContent = "Asking question...";
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    responseDiv.textContent = "Answer: " + result.answer;
+                } else {
+                    responseDiv.textContent = "Error: " + result.error;
+                }
+            } catch (error) {
+                responseDiv.textContent = "Error asking question: " + error.message;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
