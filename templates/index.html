@@ -64,6 +64,8 @@
     <div class="response" id="response"></div>
 
     <script>
+        let session_id = null; // Store session ID globally
+
         // Function to handle PDF upload
         async function uploadPdf() {
             const fileInput = document.getElementById('pdf-file');
@@ -81,6 +83,7 @@
 
                 const result = await response.json();
                 if (response.ok) {
+                    session_id = result.session_id; // Store session ID
                     responseDiv.textContent = "PDF uploaded and processed! You can now ask questions.";
                 } else {
                     responseDiv.textContent = "Error: " + result.error;
@@ -100,13 +103,18 @@
                 return;
             }
 
+            if (!session_id) {
+                responseDiv.textContent = "Please upload a PDF first.";
+                return;
+            }
+
             responseDiv.textContent = "Asking question...";
 
             try {
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question })
+                    body: JSON.stringify({ question, session_id })
                 });
 
                 const result = await response.json();
