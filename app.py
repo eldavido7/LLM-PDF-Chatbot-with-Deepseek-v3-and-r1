@@ -5,11 +5,16 @@ import requests  # For HTTP requests to DeepSeek API
 from flask import Flask, request, jsonify, render_template
 import json  # For handling JSON data
 import uuid  # For generating unique session IDs
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 
-# Set your DeepSeek API key
-deepseek_api_key = "sk-4398b4301343408db5511fc994b070f6"
+# Load environment variables from .env file
+load_dotenv()
+
+# Access the DeepSeek API key from the environment variable
+deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
 deepseek_api_base = "https://api.deepseek.com/beta"
 
 # Directory to store uploaded files and processed content

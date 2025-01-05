@@ -1,1 +1,5 @@
 .env
+token.json
+credentials.json
+uploads/
+content/
