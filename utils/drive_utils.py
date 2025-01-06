@@ -4,7 +4,6 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
-from google_auth_oauthlib.flow import InstalledAppFlow
 from dotenv import load_dotenv
 import io
 import json
@@ -33,38 +32,25 @@ def authenticate_google_drive():
         # Load the service account credentials from the environment variable (JSON string)
         creds_dict = json.loads(credentials_json)
         creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        
-        # Use token.json for credentials if available
-        if os.path.exists(token_file):
-            creds = Credentials.from_authorized_user_file(token_file, scopes)
-        
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                raise Exception("Unable to authenticate with the service account.")
-            with open(token_file, 'w') as token:
-                token.write(creds.to_json())
     else:
         # In development, use local service account credentials file
         credentials_path = "GOOGLE_APPLICATION_CREDENTIALS.json"
-        
         if not os.path.exists(credentials_path):
             raise Exception(f"{credentials_path} file not found in the local environment.")
         
         creds = service_account.Credentials.from_service_account_file(credentials_path, scopes=scopes)
-        
-        # Use token.json for credentials if available
-        if os.path.exists(token_file):
-            creds = Credentials.from_authorized_user_file(token_file, scopes)
-        
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                raise Exception("Unable to authenticate with the local service account.")
-            with open(token_file, 'w') as token:
-                token.write(creds.to_json())
+    
+    # Use token.json for credentials if available
+    if os.path.exists(token_file):
+        creds = Credentials.from_authorized_user_file(token_file, scopes)
+    
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            raise Exception("Unable to authenticate with the service account.")
+        with open(token_file, 'w') as token:
+            token.write(creds.to_json())
 
     return build('drive', 'v3', credentials=creds)
 
