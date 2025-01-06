@@ -19,21 +19,45 @@ FOLDER_ID = "1Gx3auUkba55e2suc2lXOHot-_C21gSoI"
 
 def authenticate_google_drive():
     """Authenticate with Google Drive API and return the service object."""
+    import json
     creds = None
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, ['https://www.googleapis.com/auth/drive.file'])
+    token_file = "token.json"
+    scopes = ['https://www.googleapis.com/auth/drive.file']
     
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                CREDENTIALS_FILE, ['https://www.googleapis.com/auth/drive.file'])
-            creds = flow.run_local_server(port=0)
-        
-        with open(TOKEN_FILE, 'w') as token:
-            token.write(creds.to_json())
-    
+    # Check environment
+    env = os.getenv("ENV", "development")
+
+    if env == "production":
+        # Use credentials from environment variable
+        credentials_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+        if not credentials_json:
+            raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
+        creds_dict = json.loads(credentials_json)
+        if os.path.exists(token_file):
+            creds = Credentials.from_authorized_user_file(token_file, scopes)
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_config(creds_dict, scopes)
+                creds = flow.run_local_server(port=0)
+            with open(token_file, 'w') as token:
+                token.write(creds.to_json())
+    else:
+        # Use credentials file locally
+        if os.path.exists(token_file):
+            creds = Credentials.from_authorized_user_file(token_file, scopes)
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    "credentials.json", scopes
+                )
+                creds = flow.run_local_server(port=0)
+            with open(token_file, 'w') as token:
+                token.write(creds.to_json())
+
     return build('drive', 'v3', credentials=creds)
 
 def upload_file_to_drive(service, file_path, file_name):
