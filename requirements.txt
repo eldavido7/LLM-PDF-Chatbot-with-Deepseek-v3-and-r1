@@ -145,7 +145,7 @@ tenacity==9.0.0
 tiktoken==0.8.0
 tokenizers==0.21.0
 toml
-torch+cpu
+torch -f https://download.pytorch.org/whl/cpu/torch_stable.html
 torchaudio==2.5.1
 torchvision==0.20.1
 tornado==6.4.2
