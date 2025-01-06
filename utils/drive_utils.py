@@ -2,24 +2,21 @@ import os
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.oauth2 import service_account
+from google_auth_oauthlib.flow import InstalledAppFlow
 from dotenv import load_dotenv
 import io
+import json
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Access the credentials from the environment variable
-CREDENTIALS_FILE = "credentials.json"
-TOKEN_FILE = "token.json"
 
 # Folder ID where you want to upload the file
 FOLDER_ID = "1Gx3auUkba55e2suc2lXOHot-_C21gSoI"
 
 def authenticate_google_drive():
     """Authenticate with Google Drive API and return the service object."""
-    import json
     creds = None
     token_file = "token.json"
     scopes = ['https://www.googleapis.com/auth/drive.file']
@@ -28,33 +25,43 @@ def authenticate_google_drive():
     env = os.getenv("ENV", "development")
 
     if env == "production":
-        # Use credentials from environment variable
-        credentials_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+        # In production, use service account from environment variable
+        credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         if not credentials_json:
-            raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
-        creds_dict = json.loads(credentials_json)
+            raise Exception("GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
+        
+        # Load the service account credentials from the environment variable (pointing to a file path)
+        creds = service_account.Credentials.from_service_account_file(credentials_json, scopes=scopes)
+        
+        # If token.json exists, use it for storing the credentials
         if os.path.exists(token_file):
             creds = Credentials.from_authorized_user_file(token_file, scopes)
+        
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_config(creds_dict, scopes)
-                creds = flow.run_local_server(port=0)
+                raise Exception("Unable to authenticate with the service account.")
             with open(token_file, 'w') as token:
                 token.write(creds.to_json())
     else:
-        # Use credentials file locally
+        # In development, use local service account credentials file
+        credentials_path = "GOOGLE_APPLICATION_CREDENTIALS.json"
+        
+        if not os.path.exists(credentials_path):
+            raise Exception(f"{credentials_path} file not found in the local environment.")
+        
+        creds = service_account.Credentials.from_service_account_file(credentials_path, scopes=scopes)
+        
+        # If token.json exists, use it for storing the credentials
         if os.path.exists(token_file):
             creds = Credentials.from_authorized_user_file(token_file, scopes)
+        
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    "credentials.json", scopes
-                )
-                creds = flow.run_local_server(port=0)
+                raise Exception("Unable to authenticate with the local service account.")
             with open(token_file, 'w') as token:
                 token.write(creds.to_json())
 

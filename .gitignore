@@ -1,6 +1,7 @@
 .env
 token.json
 credentials.json
+GOOGLE_APPLICATION_CREDENTIALS.json
 uploads/
 content/
 .venv/
