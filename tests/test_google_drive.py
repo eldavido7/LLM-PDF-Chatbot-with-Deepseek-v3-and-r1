@@ -7,7 +7,7 @@ from google.oauth2.credentials import Credentials
 TOKEN_PATH = "token.json"
 
 # Define the folder ID for uploads
-DRIVE_FOLDER_ID = "1Gx3auUkba55e2suc2lXOHot-_C21gSoI"
+DRIVE_FOLDER_ID = "your_target_folder_ID" 
 
 def authenticate_google_drive():
     """Authenticate and return the Google Drive service."""
@@ -35,10 +35,10 @@ def upload_file_to_drive(service, file_path, file_name):
         return None
 
 # Example usage (for testing only; remove or comment out in production)
-# if __name__ == "__main__":
-#     service = authenticate_google_drive()
-#     if service:
-#         # File path and name for the test file in the root directory
-#         test_file_path = "test.pdf"
-#         test_file_name = "test.pdf"
-#         upload_file_to_drive(service, test_file_path, test_file_name)
+if __name__ == "__main__":
+    service = authenticate_google_drive()
+    if service:
+        # File path and name for the test file in the root directory
+        test_file_path = "test.pdf"
+        test_file_name = "test.pdf"
+        upload_file_to_drive(service, test_file_path, test_file_name)

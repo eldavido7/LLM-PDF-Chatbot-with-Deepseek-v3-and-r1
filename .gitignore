@@ -3,3 +3,5 @@ token.json
 credentials.json
 uploads/
 content/
+.venv/
+__pycache__/

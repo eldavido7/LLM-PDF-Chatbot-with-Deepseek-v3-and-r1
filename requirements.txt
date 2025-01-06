@@ -1,0 +1,8 @@
+Flask
+python-dotenv
+google-api-python-client
+fitz  # PyMuPDF
+camelot-py[cv]
+transformers
+pandas
+requests
