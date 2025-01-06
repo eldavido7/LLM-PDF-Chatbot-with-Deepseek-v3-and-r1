@@ -30,10 +30,11 @@ def authenticate_google_drive():
         if not credentials_json:
             raise Exception("GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
         
-        # Load the service account credentials from the environment variable (pointing to a file path)
-        creds = service_account.Credentials.from_service_account_file(credentials_json, scopes=scopes)
+        # Load the service account credentials from the environment variable (JSON string)
+        creds_dict = json.loads(credentials_json)
+        creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=scopes)
         
-        # If token.json exists, use it for storing the credentials
+        # Use token.json for credentials if available
         if os.path.exists(token_file):
             creds = Credentials.from_authorized_user_file(token_file, scopes)
         
@@ -53,7 +54,7 @@ def authenticate_google_drive():
         
         creds = service_account.Credentials.from_service_account_file(credentials_path, scopes=scopes)
         
-        # If token.json exists, use it for storing the credentials
+        # Use token.json for credentials if available
         if os.path.exists(token_file):
             creds = Credentials.from_authorized_user_file(token_file, scopes)
         
