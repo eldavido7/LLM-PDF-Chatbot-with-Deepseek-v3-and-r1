@@ -5,9 +5,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Access the DeepSeek API key from the environment variable
+# Access the DeepSeek API key and base URL from environment variables
 deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
 deepseek_api_base = "https://api.deepseek.com/beta"
+
+# Configure token limits
+MAX_OUTPUT_TOKENS = 2000  # Optimized for Render free tier
+MAX_CONTEXT_TOKENS = 12000  # Slightly under max for efficiency and to avoid errors
 
 def query_deepseek(prompt):
     """Send the prompt to DeepSeek API and get the response."""
@@ -21,7 +25,10 @@ def query_deepseek(prompt):
             json={
                 "model": "deepseek-chat",
                 "prompt": prompt,
-                "max_tokens": 150
+                "max_tokens": MAX_OUTPUT_TOKENS,
+                "temperature": 0.7,  # Balanced creativity
+                "top_p": 0.9,       # Nucleus sampling for better responses
+                "context_length": MAX_CONTEXT_TOKENS
             }
         )
         response_data = response.json()

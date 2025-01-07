@@ -64,37 +64,33 @@ else:
     drive_service = None
 
 def summarize_text(text, enable_summarization=False):
-    """Configurable text summarization with length-based bypass"""
+    """Enable summarization for longer chunks when toggled."""
     if not enable_summarization:
-        # Return first 1000 characters if summarization disabled
-        return text[:1000]
+        return text[:2000]  # Adjusted default to larger preview length
         
     try:
-        # Only summarize if text is long enough to warrant it
-        if len(text) < 1000:
+        if len(text) < 2000:
             return text
             
-        # Break text into smaller chunks if too long
-        max_chunk_size = 1000
+        max_chunk_size = 2000  # Increased chunk size
         words = text.split()
         chunks = []
         
         summarizer = get_summarizer()
         for i in range(0, len(words), max_chunk_size):
             chunk = " ".join(words[i:i + max_chunk_size])
-            max_length = min(150, int(len(chunk.split()) * 0.3))
-            min_length = min(30, int(len(chunk.split()) * 0.1))
+            max_length = min(200, int(len(chunk.split()) * 0.3))  # Larger max length
+            min_length = min(50, int(len(chunk.split()) * 0.1))
             summary = summarizer(chunk, max_length=max_length, min_length=min_length, do_sample=False)
             chunks.append(summary[0]['summary_text'])
             
-            # Stop after 3 chunks to limit processing time
-            if len(chunks) >= 3:
+            if len(chunks) >= 6:  # Allow more chunks
                 break
         
         return " ".join(chunks)
     except Exception as e:
         print(f"Error summarizing text: {e}")
-        return text[:1000]
+        return text[:2000]
 
 def extract_pdf_text(pdf_path):
     """Memory-efficient PDF text extraction with better error handling"""
@@ -128,11 +124,10 @@ def extract_pdf_text(pdf_path):
         return None
 
 def extract_pdf_tables(pdf_path):
-    """Memory-efficient table extraction with better error handling"""
+    """Extract tables from more pages while staying within Render's free tier limits."""
     tables = []
     try:
-        # Process only first 10 pages for tables to save memory
-        max_pages = 10
+        max_pages = 20  # Adjusted limit for Render's free tier
         
         # First check if the PDF exists and is readable
         if not os.path.exists(pdf_path):
@@ -149,7 +144,6 @@ def extract_pdf_tables(pdf_path):
             
         # Use string format for pages only if we have pages to process
         pages_str = f"1-{actual_pages}"
-        
         extracted_tables = camelot.read_pdf(
             pdf_path,
             pages=pages_str,
@@ -165,7 +159,7 @@ def extract_pdf_tables(pdf_path):
                         tables.append(table_json)
                     del table.df
                 except Exception as table_error:
-                    print(f"Error processing individual table: {table_error}")
+                    print(f"Error processing table: {table_error}")
                     continue
         
     except Exception as e:
@@ -229,7 +223,7 @@ def chat():
     data = request.get_json()
     question = data.get('question')
     session_id = data.get('session_id')
-    enable_summarization = data.get('enable_summarization', False)  # Make summarization optional
+    enable_summarization = data.get('enable_summarization', False)
 
     if not question or not session_id:
         return jsonify({"error": "Missing required parameters"}), 400
@@ -239,51 +233,28 @@ def chat():
         if not os.path.exists(content_path):
             return jsonify({"error": "No PDF content available"}), 400
 
-        try:
-            with open(content_path, "r") as f:
-                content = json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"Invalid JSON in content file: {e}")
-            return jsonify({"error": "Invalid content data"}), 500
+        with open(content_path, "r") as f:
+            content = json.load(f)
 
         pdf_text = content.get("text", "")
         pdf_tables = content.get("tables", [])
 
-        # Process text and tables concurrently
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor() as executor:
-            # Start text summarization
-            summary_future = executor.submit(
-                summarize_text, 
-                pdf_text, 
-                enable_summarization
-            )
-            
-            # Process tables while summarization is running
-            table_summaries = []
-            for i, table in enumerate(pdf_tables[:2]):  # Reduced to 2 tables for speed
-                try:
-                    if isinstance(table, str):
-                        table_summaries.append(f"Table {i + 1}:\n{table}")
-                except Exception as table_error:
-                    print(f"Error processing table {i}: {table_error}")
-                    continue
-            
-            # Get summarization result
-            summary_text = summary_future.result()
-        
-        # Construct prompt with stricter limits
+        # Use summarization if enabled, otherwise use full text
+        summary_text = summarize_text(pdf_text, enable_summarization)
+
+        # Include all available tables in the prompt
+        table_summaries = [f"Table {i + 1}:\n{table}" for i, table in enumerate(pdf_tables)]
+
+        # Construct the full prompt
         prompt_parts = []
         if summary_text:
-            prompt_parts.append(f"Document Summary:\n{summary_text[:800]}")  # Reduced limit
+            prompt_parts.append(f"Document Summary:\n{summary_text}")
         if table_summaries:
-            table_summary = "\n\n".join(table_summaries)
-            prompt_parts.append(f"Tables:\n{table_summary[:500]}")  # Reduced limit
+            prompt_parts.append(f"Tables:\n{' '.join(table_summaries)}")
         prompt_parts.append(f"Question: {question}")
-        
         prompt = "\n\n".join(prompt_parts)
 
-        # Query DeepSeek
+        # Query DeepSeek with the constructed prompt
         answer = query_deepseek(prompt)
         if not answer:
             return jsonify({"error": "Failed to get response from AI model"}), 500
