@@ -174,6 +174,10 @@ def extract_pdf_tables(pdf_path):
 
 @app.route('/upload', methods=['POST'])
 def upload_pdf():
+    max_size = 1 * 1024 * 1024
+    if request.content_length > max_size:
+        return jsonify({"error": "File too large. Maximum size is 1MB"}), 413
+    
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
