@@ -149,6 +149,13 @@
                     body: formData
                 });
 
+                // Check if the response is not OK (status code >= 400)
+                if (!response.ok) {
+                    const errorData = await response.json(); // Parse the error message from the backend
+                    responseDiv.textContent = "Error: " + errorData.error; // Display the error message
+                    return;
+                }
+
                 const result = await response.json();
                 if (response.ok) {
                     session_id = result.session_id; // Store session ID

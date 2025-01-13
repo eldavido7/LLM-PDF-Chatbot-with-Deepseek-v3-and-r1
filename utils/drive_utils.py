@@ -12,7 +12,7 @@ import json
 load_dotenv()
 
 # Folder ID where you want to upload the file
-FOLDER_ID = "1Gx3auUkba55e2suc2lXOHot-_C21gSoI"
+FOLDER_ID = os.getenv("FOLDERID")
 
 def authenticate_google_drive():
     """Authenticate with Google Drive API using either OAuth or service account."""

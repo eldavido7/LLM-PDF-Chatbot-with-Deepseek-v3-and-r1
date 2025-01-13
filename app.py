@@ -33,7 +33,7 @@ load_dotenv()
 # Environment-specific configuration
 ENV = os.getenv("ENV", "production")
 DEBUG = ENV == "development"
-PORT = int(os.getenv("PORT", 10000))  # Render uses PORT env variable
+PORT = int(os.getenv("PORT", 10000))  # Deployment uses PORT env variable
 
 # Lazy loading of ML models
 summarizer = None
