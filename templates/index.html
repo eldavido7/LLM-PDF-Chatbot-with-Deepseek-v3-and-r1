@@ -137,10 +137,23 @@
         // Function to handle PDF upload
         async function uploadPdf() {
             const fileInput = document.getElementById('pdf-file');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
+            const file = fileInput.files[0];
+            const maxSize = 1 * 1024 * 1024; // 1MB in bytes
             const responseDiv = document.getElementById('response');
+
+            if (!file) {
+                responseDiv.textContent = "Please select a file to upload.";
+                return;
+            }
+
+            if (file.size > maxSize) {
+                responseDiv.textContent = "File too large. Maximum size is 1MB.";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
             responseDiv.textContent = "Uploading PDF...";
 
             try {
