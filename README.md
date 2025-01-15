@@ -37,9 +37,7 @@ Follow these steps to set up and run the application locally:
    
    * Sign up for Google Cloud Console and create a project
    * Enable the Google Drive API
-   * Download the JSON credentials file and set its path in the .env file:
-
-            GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
+   * Download the JSON credentials file and place it in the root directory of the application.
    
    ii. DeepSeek API Key
    * Sign up for DeepSeek and generate an API key
