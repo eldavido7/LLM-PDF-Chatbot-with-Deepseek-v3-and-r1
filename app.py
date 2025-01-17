@@ -14,9 +14,13 @@ from utils.drive_utils import (
     download_file_from_drive,
 )
 from utils.api_utils import query_deepseek
+from flask_cors import CORS
 
 # Initialize Flask application
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app)
 
 # Production security headers
 @app.after_request

@@ -6,3 +6,5 @@ uploads/
 content/
 .venv/
 __pycache__/
+frontend/
+render.yaml
