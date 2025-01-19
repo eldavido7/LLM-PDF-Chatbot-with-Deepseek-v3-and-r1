@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { slideIn, fadeIn } from "../motion";
-import Image from "next/image"; // Import Image from next/image
+import Image from "next/image";
 
 interface LandingSectionProps {
   onNext: () => void;
@@ -17,30 +17,31 @@ const LandingSection: React.FC<LandingSectionProps> = ({ onNext }) => {
 
       {/* Main Content */}
       <div className="flex-grow flex items-center justify-center px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Text Section */}
           <motion.div
-            className="space-y-6"
-            variants={fadeIn("up", 0)} // Fade in the text from the bottom
+            className="space-y-6 md:px-6"
+            variants={fadeIn("up", 0)}
             initial="initial"
             animate="animate"
           >
             <motion.h1
-              className="text-5xl md:text-6xl font-extrabold leading-tight text-center lg:text-left"
-              variants={fadeIn("up", 1)} // Individual fade for the heading
+              className="text-5xl md:text-6xl font-extrabold leading-tight text-center md:text-left"
+              variants={fadeIn("up", 1)}
             >
               TL;DR <br /> Your PDFs in Seconds!
             </motion.h1>
             <motion.p
-              className="text-lg leading-relaxed text-center lg:text-left"
-              variants={fadeIn("up", 2)} // Fade in the paragraph
+              className="text-lg leading-relaxed text-center md:text-left"
+              variants={fadeIn("up", 2)}
             >
-              Don’t waste time reading lengthy documents. Upload your PDFs and
-              get instant answers to your questions. It’s fast, easy, and fun!
+              Don&apos;t waste time reading lengthy documents. Upload your PDFs
+              and get instant answers to your questions. It&apos;s fast, easy,
+              and fun!
             </motion.p>
             <motion.div
-              className="flex md:justify-start justify-center"
-              variants={fadeIn("up", 3)} // Fade in the button
+              className="flex justify-center md:justify-start"
+              variants={fadeIn("up", 3)}
             >
               <button
                 onClick={onNext}
@@ -53,18 +54,21 @@ const LandingSection: React.FC<LandingSectionProps> = ({ onNext }) => {
 
           {/* Image Section */}
           <motion.div
-            className="hidden lg:flex justify-center items-center"
-            variants={slideIn("right", 0)} // Slide in the image from the right
+            className="hidden md:flex justify-center items-center"
+            variants={slideIn("right", 0)}
             initial="initial"
             animate="animate"
           >
-            <Image
-              src="/ai-chat-bot.png"
-              alt="Chatbot Illustration"
-              className="max-w-xs md:max-w-md lg:max-w-full h-auto"
-              width={500}
-              height={500}
-            />
+            <div className="relative w-full max-w-md aspect-square">
+              <Image
+                src="/ai-chat-bot.png"
+                alt="Chatbot Illustration"
+                fill
+                priority
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="object-contain"
+              />
+            </div>
           </motion.div>
         </div>
       </div>

@@ -215,7 +215,7 @@ def upload_pdf():
             }, f)
 
         return jsonify({
-            "message": "PDF uploaded successfully. Ask a question!",
+            "message": "PDF uploaded successfully. Click next to ask a question!",
             "session_id": session_id
         })
 
@@ -225,7 +225,7 @@ def upload_pdf():
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
-    question = data.get('question')
+    question = data.get('question', "").strip()
     session_id = data.get('session_id')
     enable_summarization = data.get('enable_summarization', False)
 
@@ -233,6 +233,7 @@ def chat():
         return jsonify({"error": "Missing required parameters"}), 400
 
     try:
+        # Load the document content
         content_path = os.path.join(CONTENT_DIR, f"{session_id}.json")
         if not os.path.exists(content_path):
             return jsonify({"error": "No PDF content available"}), 400
@@ -243,27 +244,50 @@ def chat():
         pdf_text = content.get("text", "")
         pdf_tables = content.get("tables", [])
 
-        # Use summarization if enabled, otherwise use full text
+        # Optionally summarize text
         summary_text = summarize_text(pdf_text, enable_summarization)
 
-        # Include all available tables in the prompt
+        # Prepare tables for inclusion in the prompt
         table_summaries = [f"Table {i + 1}:\n{table}" for i, table in enumerate(pdf_tables)]
 
-        # Construct the full prompt
-        prompt_parts = []
+        # Determine intent dynamically using the LLM
+        prompt_parts = [
+            "You are an intelligent assistant that helps users interact with document content.",
+            "Classify the input as one of the following:",
+            "- Greeting (e.g., 'hello', 'hi')",
+            "- Gratitude (e.g., 'thank you')",
+            "- Relevant question related to the document",
+            "- Irrelevant question unrelated to the document",
+            "- Other input",
+            "Respond appropriately based on the classification:",
+            "- For greeting: Acknowledge and invite the user to ask a question.",
+            "- For gratitude: Thank them and offer further assistance.",
+            "- For relevant questions: Answer using the document context.",
+            "- For irrelevant questions: Politely state that you're limited to document-related queries."
+        ]
+
         if summary_text:
             prompt_parts.append(f"Document Summary:\n{summary_text}")
         if table_summaries:
             prompt_parts.append(f"Tables:\n{' '.join(table_summaries)}")
-        prompt_parts.append(f"Question: {question}")
+        prompt_parts.append(f"User Input: {question}")
         prompt = "\n\n".join(prompt_parts)
 
         # Query DeepSeek with the constructed prompt
-        answer = query_deepseek(prompt)
-        if not answer:
-            return jsonify({"error": "Failed to get response from AI model"}), 500
+        response = query_deepseek(prompt)
 
-        return jsonify({"answer": answer})
+        if not response:
+            return jsonify({"answer": "I'm sorry, I couldn't process your request. Please try asking again."})
+
+        # Clean up the response to ensure only the actual reply is returned
+        response_lines = response.split("\n")
+        dynamic_response = response_lines[-1].strip()  # Assuming the last line contains the actual reply
+
+        # If the response contains unwanted prefixes like "Response: " or other text,
+        # we'll remove them and return only the answer.
+        clean_response = dynamic_response.replace("Response:", "").strip()
+
+        return jsonify({"answer": clean_response})
 
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")

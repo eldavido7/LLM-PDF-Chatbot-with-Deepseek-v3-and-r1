@@ -8,7 +8,10 @@ import { useDispatch } from "react-redux"; // Import Redux's useDispatch
 import { pdfjs } from "react-pdf";
 import { setSessionId } from "@/app/api/chat.slice";
 import Loader from "../app/loader";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
+// Set the worker externally - make sure this file exists in your public directory
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 interface FileUploaderProps {
@@ -83,7 +86,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white px-4">
       {/* Toast Container */}
-      <Toaster position="top-right" />
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
 
       {/* Back Button */}
       <button
