@@ -6,7 +6,7 @@ import { slideIn, fadeIn, fadeStagger } from "../motion";
 import { sendChatQuery } from "../app/api/chat.service";
 import { addMessage, setLoading, setError } from "../app/api/chat.slice";
 import Loader from "../Load";
-import { FaInfoCircle } from "react-icons/fa";
+// import { FaInfoCircle } from "react-icons/fa";
 // import { toast, Toaster } from "sonner";
 
 interface ChatInterfaceProps {
@@ -15,6 +15,7 @@ interface ChatInterfaceProps {
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
   const [question, setQuestion] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [enableSummarization, setEnableSummarization] = useState(false);
   const dispatch = useDispatch();
 
@@ -65,7 +66,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
         <h1 className="text-lg font-bold md:block hidden pl-48">
           SmartPDF Chat
         </h1>
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <label className="toggle-container">
             <span className="toggle-label">Enable Summarization</span>
             <input
@@ -75,18 +76,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
               onChange={() => setEnableSummarization(!enableSummarization)}
             />
             <span className="toggle-switch"></span>
-          </label>
-          {/* Info Icon */}
-          <div className="relative group">
+          </label> */}
+        {/* Info Icon */}
+        {/* <div className="relative group">
             <FaInfoCircle
               className="text-indigo-600 cursor-pointer"
               size={20}
               // onClick={() =>
               //   toast("Slower, but more concise and comprehensive responses.")
               // }
-            />
-            {/* Tooltip */}
-            <div
+            /> */}
+        {/* Tooltip */}
+        {/* <div
               className="absolute top-full mt-2 w-48 p-2 text-sm text-white bg-black rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
               style={{
                 left: "auto",
@@ -98,7 +99,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
               Slower, but more concise and comprehensive responses.
             </div>
           </div>
-        </div>
+        </div> */}
       </header>
 
       {/* Chat Area */}
