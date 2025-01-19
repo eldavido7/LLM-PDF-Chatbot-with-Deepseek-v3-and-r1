@@ -7,7 +7,7 @@ import { sendChatQuery } from "../app/api/chat.service";
 import { addMessage, setLoading, setError } from "../app/api/chat.slice";
 import Loader from "../Load";
 import { FaInfoCircle } from "react-icons/fa";
-// import { toast, Toaster } from "sonner"; // Import Sonner toast
+// import { toast, Toaster } from "sonner";
 
 interface ChatInterfaceProps {
   onBack: () => void;
@@ -87,8 +87,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
             />
             {/* Tooltip */}
             <div
-              className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-48 p-2 text-sm text-white bg-black rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-w-xs sm:max-w-md md:max-w-lg z-10"
-              style={{ left: "calc(50% - 5rem)" }} // Adjust this to move the tooltip left
+              className="absolute top-full mt-2 w-48 p-2 text-sm text-white bg-black rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+              style={{
+                left: "auto",
+                right: 0, // Aligns tooltip to the left if it's too close to the screen's edge
+                maxWidth: "calc(100vw - 20px)",
+                whiteSpace: "normal",
+              }}
             >
               Slower, but more concise and comprehensive responses.
             </div>
