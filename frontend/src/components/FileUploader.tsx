@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Document, Page } from "react-pdf";
-import { slideIn, fadeIn } from "../motion"; // Import from motion.js
-import { uploadDocument } from "../app/api/chat.service"; // Import your service
-import { toast, Toaster } from "sonner"; // Import Sonner for toast notifications
-import { useDispatch } from "react-redux"; // Import Redux's useDispatch
+import { slideIn, fadeIn } from "../motion";
+import { uploadDocument } from "../app/api/chat.service";
+import { toast, Toaster } from "sonner";
+import { useDispatch } from "react-redux";
 import { pdfjs } from "react-pdf";
 import { setSessionId } from "@/app/api/chat.slice";
 import Loader from "../app/loader";
+import Load from "../Load";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -30,7 +31,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [pdfData, setPdfData] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadComplete, setUploadComplete] = useState(false); // Track upload status
+  const [uploadComplete, setUploadComplete] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -43,9 +45,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       setFile(selectedFile);
       onFileUpload(selectedFile);
 
+      setIsPreviewLoading(true); // Start loader
+
       // Read the file as a data URL to preview
       const reader = new FileReader();
-      reader.onload = (e) => setPdfData(e.target?.result as string);
+      reader.onload = (e) => {
+        setPdfData(e.target?.result as string);
+        setIsPreviewLoading(false); // Stop loader
+      };
       reader.readAsDataURL(selectedFile);
     }
   };
@@ -144,9 +151,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           >
             <h3 className="text-lg font-bold text-gray-800 mb-4">Preview</h3>
             <div className="border rounded-lg overflow-hidden">
-              <Document file={pdfData} className="overflow-auto max-h-64">
-                <Page pageNumber={1} scale={1.5} />
-              </Document>
+              {isPreviewLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Load />
+                </div>
+              ) : (
+                <Document file={pdfData} className="overflow-auto max-h-64">
+                  <Page pageNumber={1} scale={1.5} />
+                </Document>
+              )}
             </div>
           </motion.div>
         )}
