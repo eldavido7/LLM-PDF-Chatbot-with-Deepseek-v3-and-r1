@@ -142,10 +142,8 @@ tenacity
 tiktoken
 tokenizers
 toml
-torch -f https://download.pytorch.org/whl/cpu/torch_stable.html
 tornado
 tqdm
-transformers
 typing-inspect
 typing_extensions
 tzdata

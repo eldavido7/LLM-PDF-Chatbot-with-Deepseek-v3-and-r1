@@ -5,7 +5,7 @@ import pandas as pd
 from io import StringIO
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
-from transformers import pipeline
+from utils.api_utils import query_deepseek, query_deepseek_r1
 import camelot
 import fitz
 from utils.drive_utils import (
@@ -39,22 +39,6 @@ ENV = os.getenv("ENV", "production")
 DEBUG = ENV == "development"
 PORT = int(os.getenv("PORT", 10000))  # Deployment uses PORT env variable
 
-# Lazy loading of ML models
-summarizer = None
-
-def get_summarizer():
-    """Lazy load the summarization model with GPU if available"""
-    global summarizer
-    if summarizer is None:
-        import torch
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        summarizer = pipeline(
-            "summarization",
-            model="sshleifer/distilbart-cnn-12-6",
-            device=device  # Use GPU if available
-        )
-    return summarizer
-
 # Create directories
 CONTENT_DIR = "content"
 UPLOAD_DIR = "uploads"
@@ -76,17 +60,17 @@ def summarize_text(text, enable_summarization=False):
         if len(text) < 2000:
             return text
             
-        max_chunk_size = 2000  # Increased chunk size
+        # Use DeepSeek R1 for summarization with chunking
         words = text.split()
         chunks = []
+        max_chunk_size = 2000
         
-        summarizer = get_summarizer()
         for i in range(0, len(words), max_chunk_size):
             chunk = " ".join(words[i:i + max_chunk_size])
-            max_length = min(200, int(len(chunk.split()) * 0.3))  # Larger max length
-            min_length = min(50, int(len(chunk.split()) * 0.1))
-            summary = summarizer(chunk, max_length=max_length, min_length=min_length, do_sample=False)
-            chunks.append(summary[0]['summary_text'])
+            prompt = f"Please provide a concise summary of the following text, capturing the main points and key information:\n\n{chunk}"
+            summary = query_deepseek_r1(prompt)
+            if summary:
+                chunks.append(summary)
             
             if len(chunks) >= 6:  # Allow more chunks
                 break

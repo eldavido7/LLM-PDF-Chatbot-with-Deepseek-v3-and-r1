@@ -1,6 +1,6 @@
 import fitz  # PyMuPDF for PDF text extraction
 import camelot  # For table extraction from PDF
-from transformers import pipeline  # For text summarization (optional)
+from .api_utils import query_deepseek_r1  # Import our R1 summarizer
 
 # A function to extract text from PDF using PyMuPDF
 def extract_pdf_text(pdf_path):
@@ -35,13 +35,13 @@ def extract_pdf_tables(pdf_path):
         print(f"Error extracting tables from PDF: {e}")
     return tables
 
-# A function to summarize text (using Hugging Face pipeline or simple approach)
+# Updated function to use DeepSeek R1 for summarization
 def summarize_text(text):
     try:
-        # Option 1: Using Hugging Face's summarization model
-        summarizer = pipeline("summarization")
-        summary = summarizer(text, max_length=150, min_length=30, do_sample=False)
-        return summary[0]['summary_text']
+        # Create a summarization prompt for R1
+        prompt = f"Please provide a concise summary of the following text, capturing the main points and key information:\n\n{text}"
+        summary = query_deepseek_r1(prompt)
+        return summary if summary else text[:500]  # Fallback to first 500 chars if API fails
     except Exception as e:
         print(f"Error summarizing text: {e}")
         # Fallback: Return first 500 characters as a simple summary
