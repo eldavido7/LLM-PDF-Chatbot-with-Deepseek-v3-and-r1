@@ -13,11 +13,17 @@ from utils.drive_utils import (
     upload_file_to_drive,
     download_file_from_drive,
 )
-from utils.api_utils import query_deepseek
 from flask_cors import CORS
 
 # Initialize Flask application
 app = Flask(__name__)
+
+# Set max request size to 10MB
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({"error": "File too large. Max size allowed is 10MB."}), 413
 
 # Enable CORS for all routes
 CORS(app)
@@ -159,7 +165,7 @@ def upload_pdf():
     # max_size = 1 * 1024 * 1024
     # if request.content_length > max_size:
     #     return jsonify({"error": "File too large. Maximum size is 1MB"}), 413
-    
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -167,10 +173,17 @@ def upload_pdf():
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
+    # Validate file type
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({"error": "Invalid file type. Only PDF files are allowed."}), 400
+
     try:
-        # Create temp directory if it doesn't exist
+        # Ensure temp directory exists
         os.makedirs("temp", exist_ok=True)
-        local_pdf_path = os.path.join("temp", file.filename)
+
+        # Use a secure filename to handle Unicode filenames safely
+        safe_filename = str(uuid.uuid4()) + ".pdf"
+        local_pdf_path = os.path.join("temp", safe_filename)
         file.save(local_pdf_path)
 
         # Process file
@@ -178,6 +191,7 @@ def upload_pdf():
         pdf_tables = extract_pdf_tables(local_pdf_path)
 
         if not pdf_text and not pdf_tables:
+            os.remove(local_pdf_path)  # Cleanup before returning error
             return jsonify({"error": "Failed to extract content from PDF"}), 500
 
         # Upload to Drive only in production
@@ -185,7 +199,7 @@ def upload_pdf():
         if ENV == "production":
             drive_file_id = upload_file_to_drive(drive_service, local_pdf_path, file.filename)
 
-        # Clean up
+        # Clean up temp file
         os.remove(local_pdf_path)
 
         # Save extracted content
@@ -204,6 +218,8 @@ def upload_pdf():
         })
 
     except Exception as e:
+        if os.path.exists(local_pdf_path):
+            os.remove(local_pdf_path)  # Ensure cleanup on error
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500
 
 @app.route('/chat', methods=['POST'])
@@ -287,6 +303,6 @@ if __name__ == '__main__':
         app.config['SESSION_COOKIE_SECURE'] = True
         app.config['SESSION_COOKIE_HTTPONLY'] = True
         app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-        app.run(host='0.0.0.0', port=PORT)
+        app.run(host='0.0.0.0', port=PORT, threaded=True)
     else:
         app.run(debug=True)
