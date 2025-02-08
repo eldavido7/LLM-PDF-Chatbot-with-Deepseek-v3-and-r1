@@ -138,7 +138,7 @@
         async function uploadPdf() {
             const fileInput = document.getElementById('pdf-file');
             const file = fileInput.files[0];
-            const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+            // const maxSize = 1 * 1024 * 1024; // 1MB in bytes
             const responseDiv = document.getElementById('response');
 
             if (!file) {
@@ -146,10 +146,10 @@
                 return;
             }
 
-            if (file.size > maxSize) {
-                responseDiv.textContent = "File too large. Maximum size is 1MB.";
-                return;
-            }
+            // if (file.size > maxSize) {
+            //     responseDiv.textContent = "File too large. Maximum size is 1MB.";
+            //     return;
+            // }
 
             const formData = new FormData();
             formData.append('file', file);
