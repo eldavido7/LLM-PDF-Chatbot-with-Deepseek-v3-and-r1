@@ -1,6 +1,7 @@
 import fitz  # PyMuPDF for PDF text extraction
 import camelot  # For table extraction from PDF
 from .api_utils import query_deepseek_r1  # Import our R1 summarizer
+import pandas as pd
 
 # A function to extract text from PDF using PyMuPDF
 def extract_pdf_text(pdf_path):
@@ -51,14 +52,18 @@ def summarize_text(text):
 def split_large_tables(tables, max_rows=50):
     """Split tables into smaller parts if they exceed the max_rows limit."""
     table_chunks = []
-    for table in tables:
-        table_df = camelot.read_pdf(table)  # Assuming table is a path or object
-        if len(table_df) > max_rows:
-            # Split into smaller parts
-            num_chunks = (len(table_df) // max_rows) + 1
-            for i in range(num_chunks):
-                chunk = table_df[i * max_rows:(i + 1) * max_rows]
-                table_chunks.append(chunk)
-        else:
-            table_chunks.append(table_df)
+    for table_json in tables:
+        try:
+            # Convert JSON string back into a DataFrame
+            table_df = pd.read_json(table_json)
+            
+            if len(table_df) > max_rows:
+                num_chunks = (len(table_df) // max_rows) + 1
+                for i in range(num_chunks):
+                    chunk = table_df.iloc[i * max_rows:(i + 1) * max_rows]
+                    table_chunks.append(chunk.to_json())  # Convert back to JSON
+            else:
+                table_chunks.append(table_json)  # Keep original JSON if small enough
+        except Exception as e:
+            print(f"Error processing table: {e}")
     return table_chunks
