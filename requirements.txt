@@ -30,6 +30,8 @@ favicon
 filelock
 Flask
 Flask-Cors
+flask_compress
+flask_limiter
 fonttools
 frozenlist
 fsspec

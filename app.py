@@ -1,17 +1,15 @@
 import os
 import json
 import uuid
-import pandas as pd
-from io import StringIO
+from flask_compress import Compress
 from flask import Flask, request, jsonify, render_template
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-from utils.api_utils import query_deepseek, query_deepseek_r1
-import camelot
-import fitz
+from utils.api_utils import query_deepseek
 from utils.drive_utils import (
     authenticate_google_drive,
     upload_file_to_drive,
-    download_file_from_drive,
 )
 from flask_cors import CORS
 
@@ -19,9 +17,13 @@ from utils.pdf_utils import extract_pdf_tables, extract_pdf_text, summarize_text
 
 # Initialize Flask application
 app = Flask(__name__)
+Compress(app)  # Enable response compression
 
 # Set max request size to 10MB
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB limit
+
+# Apply rate limiting (200 requests per minute per IP)
+limiter = Limiter(get_remote_address, app=app, default_limits=["20 per minute"])
 
 
 @app.errorhandler(413)
@@ -137,6 +139,7 @@ def upload_pdf():
 
 
 @app.route("/chat", methods=["POST"])
+@limiter.limit("10 per minute")  # Limit this route to 10 requests per minute
 def chat():
     data = request.get_json()
     question = data.get("question", "").strip()
