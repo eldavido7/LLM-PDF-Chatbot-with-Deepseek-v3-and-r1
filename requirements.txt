@@ -36,6 +36,7 @@ flask_limiter
 fonttools
 frozenlist
 fsspec
+ghostscript
 gitdb
 GitPython
 google-api-core
@@ -82,6 +83,7 @@ numpy
 nltk
 oauthlib
 openai
+opencv-python
 opencv-python-headless
 openpyxl
 orjson
@@ -127,7 +129,7 @@ six
 smmap
 sniffio
 soupsieve
-SQLAlchemy
+SQLAlchemy==1.4.0
 st-annotated-text
 st-theme
 streamlit
