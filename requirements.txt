@@ -137,8 +137,8 @@ overrides==7.7.0
 packaging==24.2
 pandas==2.2.3
 pbr==6.1.1
-pdfminer.six==20240706
-pdfplumber==0.11.5
+pdfminer.six
+pdfplumber
 pefile==2023.2.7
 pillow==10.4.0
 pipdeptree==2.25.0
