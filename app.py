@@ -181,7 +181,7 @@ def chat():
             "Respond appropriately based on the classification:",
             "- For greeting: Acknowledge and invite the user to ask a question.",
             "- For gratitude: Thank them and offer further assistance.",
-            "- For relevant questions: Answer using the document context.",
+            "- For relevant questions: Provide a detailed, direct answer using the document context. Ensure the response is clear, complete, and contains key information needed to fully answer the question.",
             "- For irrelevant questions: Politely state that you're limited to document-related queries.",
         ]
 
@@ -202,17 +202,7 @@ def chat():
                 }
             )
 
-        # Clean up the response to ensure only the actual reply is returned
-        response_lines = response.split("\n")
-        dynamic_response = response_lines[
-            -1
-        ].strip()  # Assuming the last line contains the actual reply
-
-        # If the response contains unwanted prefixes like "Response: " or other text,
-        # we'll remove them and return only the answer.
-        clean_response = dynamic_response.replace("Response:", "").strip()
-
-        return jsonify({"answer": clean_response})
+        return jsonify({"answer": response.strip()})
 
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")

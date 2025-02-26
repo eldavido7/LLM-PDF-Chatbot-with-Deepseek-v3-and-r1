@@ -78,14 +78,39 @@ export const sendChatQuery = async (
             headers: { "Content-Type": "application/json" },
         });
 
-        if (response.status === 200) {
-            return { success: true, message: response.data.answer };
-        } else {
-            return {
-                success: false,
-                message: "Failed to get a response from the chat service.",
-            };
+        let cleanedResponse = response.data.answer.trim();
+
+        // Remove classification header if present (for greetings, irrelevant, etc.)
+        if (cleanedResponse.includes("Classification:") && cleanedResponse.includes("Response:")) {
+            cleanedResponse = cleanedResponse.split("Response:")[1]?.trim() || cleanedResponse;
         }
+        // Remove "The user input is a relevant question related to the document." but keep everything after it
+        else if (cleanedResponse.startsWith("The user input is a relevant question related to the document.")) {
+            cleanedResponse = cleanedResponse.replace(
+                "The user input is a relevant question related to the document.", ""
+            ).trim();
+        }
+        else if (cleanedResponse.startsWith("The input is a relevant question related to the document.")) {
+            cleanedResponse = cleanedResponse.replace(
+                "The input is a relevant question related to the document.", ""
+            ).trim();
+        }
+        else if (cleanedResponse.startsWith("The input is classified as a relevant question related to the document.")) {
+            cleanedResponse = cleanedResponse.replace(
+                "The input is classified as a relevant question related to the document.", ""
+            ).trim();
+        }
+
+        // Remove <|end▁of▁sentence|> if present at the end
+        cleanedResponse = cleanedResponse.replace(/<\|end▁of▁sentence\|>$/, "").trim();
+
+        // Remove leading "?" if present
+        cleanedResponse = cleanedResponse.replace(/^\?/, "").trim();
+
+        // Remove asterisks for plain text display
+        cleanedResponse = cleanedResponse.replace(/\*\*/g, "");
+
+        return { success: true, message: cleanedResponse };
     } catch (error: unknown) {
         console.error('Chat error:', error);
         const errorMessage =

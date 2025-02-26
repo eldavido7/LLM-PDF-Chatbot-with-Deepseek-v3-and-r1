@@ -8,6 +8,7 @@ attrs
 beautifulsoup4
 blinker
 cachetools
+camelot
 camelot-py
 certifi
 cffi
