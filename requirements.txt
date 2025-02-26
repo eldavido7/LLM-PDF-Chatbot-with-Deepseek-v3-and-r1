@@ -18,3 +18,4 @@ flask_compress
 flask
 flask_limiter
 flask_cors
+gunicorn
