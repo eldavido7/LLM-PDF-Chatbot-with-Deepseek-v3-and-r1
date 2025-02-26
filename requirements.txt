@@ -16,7 +16,7 @@ blinker==1.9.0
 Brotli==1.1.0
 build==1.2.2.post1
 cachetools==5.5.0
-camelot-py==1.0.0
+camelot-py
 certifi==2024.12.14
 cffi==1.17.1
 chardet==5.2.0
@@ -167,7 +167,7 @@ pymongo==4.10.1
 PyMuPDF==1.25.1
 pyOpenSSL==25.0.0
 pyparsing==3.2.1
-pypdf==5.1.0
+pypdf
 PyPDF2==3.0.1
 pypdfium2==4.30.1
 PyPika==0.48.9
