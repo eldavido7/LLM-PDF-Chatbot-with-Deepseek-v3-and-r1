@@ -1,3 +1,4 @@
+import json
 import os
 import fitz  # PyMuPDF for PDF text extraction
 import camelot  # For table extraction from PDF
@@ -133,7 +134,8 @@ def summarize_text(text, enable_summarization=False):
             raw_summary = query_deepseek_r1(prompt)
 
             if raw_summary:
-                clean_summary = process_deepseek_response(raw_summary)
+                response_dict = json.loads(raw_summary)
+                clean_summary = process_deepseek_response(response_dict["answer"])
                 chunks.append(clean_summary)
 
             if len(chunks) >= 6:  # Allow more chunks

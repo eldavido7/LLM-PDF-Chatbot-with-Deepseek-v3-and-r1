@@ -274,7 +274,8 @@ def chat():
             )
 
         # Process the response before returning to the user (like HR does)
-        processed_answer = process_deepseek_response(raw_response)
+        response_dict = json.loads(raw_response)  # Unwrap once
+        processed_answer = process_deepseek_response(response_dict["answer"])
 
         return jsonify({"answer": processed_answer})
 
