@@ -37,8 +37,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const selectedFile = event.target.files[0];
-      if (selectedFile.size > 1048576) {
-        toast.error("File size exceeds 1MB. Please upload a smaller file.");
+      if (selectedFile.size > 10485760) {
+        toast.error("File size exceeds 10MB. Please upload a smaller file.");
         return;
       }
 
