@@ -184,29 +184,26 @@ def process_deepseek_response(response):
     if response == '{"answer": ""}' or response == {"answer": ""}:
         return "I apologize, but I couldn't generate a proper response. Can you send that message again?"
 
-    # Direct check for simple JSON object with just an answer key (your specific case)
+        # Direct check for simple JSON object with just an answer key (your specific case)
     if isinstance(response, dict) and len(response) == 1 and "answer" in response:
         answer_text = response["answer"]
-        # Remove any asterisks from the response
         if isinstance(answer_text, str):
-            answer_text = answer_text.replace("*", "")
-            return answer_text.strip()
+            return answer_text.replace("*", "").strip()
 
-        # NEW CHECK: Handle the case where the response is a string representation of JSON with an answer key
-        if (
-            isinstance(response, str)
-            and response.strip().startswith("{")
-            and response.strip().endswith("}")
-        ):
-            try:
-                json_obj = json.loads(response)
-                if "answer" in json_obj:
-                    answer_text = json_obj["answer"]
-                    if isinstance(answer_text, str):
-                        answer_text = answer_text.replace("*", "")
-                        return answer_text.strip()
-            except json.JSONDecodeError:
-                pass
+    # NEW CHECK: Handle the case where the response is a string representation of JSON with an answer key
+    if (
+        isinstance(response, str)
+        and response.strip().startswith("{")
+        and response.strip().endswith("}")
+    ):
+        try:
+            json_obj = json.loads(response)
+            if "answer" in json_obj:
+                answer_text = json_obj["answer"]
+                if isinstance(answer_text, str):
+                    return answer_text.replace("*", "").strip()
+        except json.JSONDecodeError:
+            pass
 
     # Handle code block format (```json {...} ```)
     if isinstance(response, str) and "```json" in response:
@@ -364,9 +361,8 @@ def process_deepseek_response(response):
                             answer_content = answer_content.replace("*", "")
                         return answer_content.strip()
 
-                # Fallback: return any content we can find with asterisks removed
-                result = str(response_dict)
-                return result.replace("*", "").strip()
+                # Fallback: return a readable version if possible
+                return json.dumps(response_dict, indent=2).replace("*", "").strip()
 
             except json.JSONDecodeError:
                 # If not JSON, return the raw string if it's not empty, with asterisks removed
@@ -374,6 +370,6 @@ def process_deepseek_response(response):
                     return response.strip().replace("*", "")
 
     except Exception as e:
-        print(f"Error processing DeepSeek response: {e}")
+        print(f"Error processing DeepSeek response: {e}\nResponse was: {response}")
 
     return "I'm not sure how to answer that."
