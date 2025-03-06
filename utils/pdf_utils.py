@@ -1,7 +1,10 @@
 import os
 import fitz  # PyMuPDF for PDF text extraction
 import camelot  # For table extraction from PDF
-from .api_utils import query_deepseek_r1  # Import our R1 summarizer
+from .api_utils import (
+    process_deepseek_response,
+    query_deepseek_r1,
+)  # Import our R1 summarizer
 import pandas as pd
 
 
@@ -80,6 +83,36 @@ def extract_pdf_tables(pdf_path):
 
 
 # Updated function to use DeepSeek R1 for summarization
+# def summarize_text(text, enable_summarization=False):
+#     """Enable summarization for longer chunks when toggled."""
+#     if not enable_summarization:
+#         return text[:2000]  # Adjusted default to larger preview length
+
+#     try:
+#         if len(text) < 2000:
+#             return text
+
+#         # Use DeepSeek R1 for summarization with chunking
+#         words = text.split()
+#         chunks = []
+#         max_chunk_size = 2000
+
+#         for i in range(0, len(words), max_chunk_size):
+#             chunk = " ".join(words[i : i + max_chunk_size])
+#             prompt = f"Please provide a concise summary of the following text, capturing the main points and key information:\n\n{chunk}"
+#             summary = query_deepseek_r1(prompt)
+#             if summary:
+#                 chunks.append(summary)
+
+#             if len(chunks) >= 6:  # Allow more chunks
+#                 break
+
+#         return " ".join(chunks)
+#     except Exception as e:
+#         print(f"Error summarizing text: {e}")
+#         return text[:2000]
+
+
 def summarize_text(text, enable_summarization=False):
     """Enable summarization for longer chunks when toggled."""
     if not enable_summarization:
@@ -97,9 +130,11 @@ def summarize_text(text, enable_summarization=False):
         for i in range(0, len(words), max_chunk_size):
             chunk = " ".join(words[i : i + max_chunk_size])
             prompt = f"Please provide a concise summary of the following text, capturing the main points and key information:\n\n{chunk}"
-            summary = query_deepseek_r1(prompt)
-            if summary:
-                chunks.append(summary)
+            raw_summary = query_deepseek_r1(prompt)
+
+            if raw_summary:
+                clean_summary = process_deepseek_response(raw_summary)
+                chunks.append(clean_summary)
 
             if len(chunks) >= 6:  # Allow more chunks
                 break

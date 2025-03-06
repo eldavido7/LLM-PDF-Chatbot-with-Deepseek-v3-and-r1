@@ -8,6 +8,7 @@ import { sendChatQuery } from "../app/api/chat.service";
 import { addMessage, setLoading, setError } from "../app/api/chat.slice";
 import Loader from "../Load";
 import { toast } from "sonner";
+import { FaVolumeUp } from "react-icons/fa";
 
 interface ChatInterfaceProps {
   onBack: () => void;
@@ -46,6 +47,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
       }
     } finally {
       dispatch(setLoading(false));
+    }
+  };
+
+  const speakText = (text: string) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(utterance);
+    } else {
+      toast.error("Your browser does not support text-to-speech.");
     }
   };
 
@@ -136,16 +146,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
                 )}
               >
                 <div
-                  className={`max-w-xs p-3 rounded-lg shadow-md ${
+                  className={`relative max-w-xs p-3 rounded-lg shadow-md ${
                     message.type === "question"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-200 text-gray-800"
                   }`}
                 >
                   {message.text}
+                  {message.type === "answer" && (
+                    <button
+                      onClick={() => speakText(message.text)}
+                      className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100"
+                      aria-label="Play response"
+                    >
+                      <FaVolumeUp className="text-gray-700" />
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}
+
             {isLoading && (
               <motion.div
                 className="flex justify-start"

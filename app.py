@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-from utils.api_utils import query_deepseek
+from utils.api_utils import process_deepseek_response, query_deepseek
 from utils.drive_utils import (
     authenticate_google_drive,
     upload_file_to_drive,
@@ -138,6 +138,77 @@ def upload_pdf():
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500
 
 
+# @app.route("/chat", methods=["POST"])
+# @limiter.limit("10 per minute")  # Limit this route to 10 requests per minute
+# def chat():
+#     data = request.get_json()
+#     question = data.get("question", "").strip()
+#     session_id = data.get("session_id")
+#     enable_summarization = data.get("enable_summarization", False)
+
+#     if not question or not session_id:
+#         return jsonify({"error": "Missing required parameters"}), 400
+
+#     try:
+#         # Load the document content
+#         content_path = os.path.join(CONTENT_DIR, f"{session_id}.json")
+#         if not os.path.exists(content_path):
+#             return jsonify({"error": "No PDF content available"}), 400
+
+#         with open(content_path, "r") as f:
+#             content = json.load(f)
+
+#         pdf_text = content.get("text", "")
+#         pdf_tables = content.get("tables", [])
+
+#         # Optionally summarize text
+#         summary_text = summarize_text(pdf_text, enable_summarization)
+
+#         # Prepare tables for inclusion in the prompt
+#         table_summaries = [
+#             f"Table {i + 1}:\n{table}" for i, table in enumerate(pdf_tables)
+#         ]
+
+#         # Determine intent dynamically using the LLM
+#         prompt_parts = [
+#             "You are an intelligent assistant that helps users interact with document content.",
+#             "Classify the input as one of the following:",
+#             "- Greeting (e.g., 'hello', 'hi')",
+#             "- Gratitude (e.g., 'thank you')",
+#             "- Relevant question related to the document",
+#             "- Irrelevant question unrelated to the document",
+#             "- Other input",
+#             "Respond appropriately based on the classification:",
+#             "- For greeting: Acknowledge and invite the user to ask a question.",
+#             "- For gratitude: Thank them and offer further assistance.",
+#             "- For relevant questions: Provide a detailed, direct answer using the document context. Ensure the response is clear, complete, and contains key information needed to fully answer the question.",
+#             "- For irrelevant questions: Politely state that you're limited to document-related queries.",
+#         ]
+
+#         if summary_text:
+#             prompt_parts.append(f"Document Summary:\n{summary_text}")
+#         if table_summaries:
+#             prompt_parts.append(f"Tables:\n{' '.join(table_summaries)}")
+#         prompt_parts.append(f"User Input: {question}")
+#         prompt = "\n\n".join(prompt_parts)
+
+#         # Query DeepSeek with the constructed prompt
+#         response = query_deepseek(prompt)
+
+#         if not response:
+#             return jsonify(
+#                 {
+#                     "answer": "I'm sorry, I couldn't process your request. Please try asking again."
+#                 }
+#             )
+
+#         return jsonify({"answer": response.strip()})
+
+#     except Exception as e:
+#         print(f"Error in chat endpoint: {str(e)}")
+#         return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+
+
 @app.route("/chat", methods=["POST"])
 @limiter.limit("10 per minute")  # Limit this route to 10 requests per minute
 def chat():
@@ -193,16 +264,19 @@ def chat():
         prompt = "\n\n".join(prompt_parts)
 
         # Query DeepSeek with the constructed prompt
-        response = query_deepseek(prompt)
+        raw_response = query_deepseek(prompt)
 
-        if not response:
+        if not raw_response:
             return jsonify(
                 {
                     "answer": "I'm sorry, I couldn't process your request. Please try asking again."
                 }
             )
 
-        return jsonify({"answer": response.strip()})
+        # Process the response before returning to the user (like HR does)
+        processed_answer = process_deepseek_response(raw_response)
+
+        return jsonify({"answer": processed_answer})
 
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")
