@@ -100,6 +100,11 @@ export const sendChatQuery = async (
                 "The input is classified as a relevant question related to the document.", ""
             ).trim();
         }
+        else if (cleanedResponse.startsWith("Your input is classified as a relevant question related to the document.")) {
+            cleanedResponse = cleanedResponse.replace(
+                "Your input is classified as a relevant question related to the document.", ""
+            ).trim();
+        }
 
         // Remove <|end▁of▁sentence|> if present at the end
         cleanedResponse = cleanedResponse.replace(/<\|end▁of▁sentence\|>$/, "").trim();
