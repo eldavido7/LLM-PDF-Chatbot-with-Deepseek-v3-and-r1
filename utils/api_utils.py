@@ -52,7 +52,7 @@ def query_deepseek(prompt):
         "Content-Type": "application/json",
     }
     data = {
-        "model": "deepseek/deepseek-chat-v3-0324:free",
+        "model": "deepseek/deepseek-chat-v3.1:free",
         "messages": [
             {
                 "role": "system",
