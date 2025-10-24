@@ -191,6 +191,20 @@ def process_deepseek_response(response):
         # Remove markdown bold/italic formatting
         answer = answer.replace("**", "").replace("*", "")
 
+        # Remove DeepSeek 3.1 model artifacts (appears at end of responses)
+        artifacts_to_remove = [
+            "<｜begin▁of▁sentence｜>",
+            "<|begin_of_sentence|>",
+            "<｜end▁of▁sentence｜>",
+            "<|end_of_sentence|>",
+        ]
+
+        for artifact in artifacts_to_remove:
+            if answer.endswith(artifact):
+                answer = answer[: -len(artifact)].strip()
+            # Also check if it appears anywhere in the text
+            answer = answer.replace(artifact, "").strip()
+
         # Check if we ended up with empty content
         if not answer or answer in ['""', "''", "{}", "[]"]:
             return EMPTY_RESPONSE_MSG

@@ -3,11 +3,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store";
 import { motion, AnimatePresence } from "framer-motion";
-import { slideIn, fadeIn, fadeStagger } from "../motion";
 import { sendChatQuery } from "../app/api/chat.service";
 import { addMessage, setLoading, setError } from "../app/api/chat.slice";
 import Loader from "../Load";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface ChatInterfaceProps {
   onBack: () => void;
@@ -165,7 +165,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
                 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-3xl opacity-30 rounded-full"></div>
-                <img
+                <Image
                   src="/ai-chat-bot.png"
                   alt="AI Assistant"
                   className="relative w-40 h-40 drop-shadow-2xl"
@@ -185,7 +185,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                Ask me anything about your document. I'm here to provide clear and helpful answers.
+                Ask me anything about your document. I&apos;m here to provide clear and helpful answers.
               </motion.p>
             </motion.div>
           ) : (
