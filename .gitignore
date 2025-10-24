@@ -7,3 +7,4 @@ content/
 .venv/
 __pycache__/
 chromadb/
+temp/
