@@ -83,7 +83,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header with glassmorphism */}
-      <header className="backdrop-blur-xl bg-white/10 border-b border-white/20 shadow-lg">
+      <header className="backdrop-blur-xl bg-white/10 border-b border-white/20 shadow-lg relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={onBack}
@@ -132,7 +132,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute left-10 -top-12 mt-12 p-3 z-50 bg-gray-900 text-white text-sm rounded-lg shadow-xl border border-white/10"  // Changed position
+                    className="absolute right-0 top-full mt-2 w-56 p-3 z-50 bg-gray-900 text-white text-sm rounded-lg shadow-xl border border-white/10"
                   >
                     Slower, but more concise and comprehensive responses.
                   </motion.div>
@@ -144,7 +144,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 relative z-0">
         <div className="max-w-7xl mx-auto">
           {messages.length === 0 ? (
             <motion.div
@@ -166,6 +166,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-3xl opacity-30 rounded-full"></div>
                 <Image
+                  width={200}
+                  height={200}
                   src="/ai-chat-bot.png"
                   alt="AI Assistant"
                   className="relative w-40 h-40 drop-shadow-2xl"
@@ -259,7 +261,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack }) => {
 
       {/* Input Area with glassmorphism */}
       <div className="border-t border-white/20 backdrop-blur-xl bg-white/10">
-        <div className="max-w-4xl mx-auto p-4">
+        <div className="max-w-7xl mx-auto p-4">
           <div className="flex items-end gap-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-2 shadow-lg">
             <textarea
               ref={textareaRef}
