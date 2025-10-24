@@ -4,43 +4,22 @@ import os
 from dotenv import load_dotenv
 import logging
 
+logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
 # Access the DeepSeek API key and base URL from environment variables
 deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-deepseek_api_base = "https://openrouter.ai/api/v1/chat/completions"
+deepseek_api_base = (
+    "https://openrouter.ai/api/v1/chat/completions"  # use this for OpenRouter API
+)
+deepseek_api_base = (
+    "https://api.deepseek.com/chat/completions"  # use this for actual DeepSeek API
+)
 
 # Configure token limits
 MAX_OUTPUT_TOKENS = 2000  # Optimized for Render free tier
 MAX_CONTEXT_TOKENS = 12000  # Slightly under max for efficiency and to avoid errors
-
-
-# def query_deepseek(prompt):
-#     """Send the prompt to DeepSeek Chat API and get the response."""
-#     try:
-#         response = requests.post(
-#             f"{deepseek_api_base}",
-#             headers={
-#                 "Authorization": f"Bearer {deepseek_api_key}",
-#                 "Content-Type": "application/json",
-#             },
-#             json={
-#                 "model": "deepseek/deepseek-chat:free",
-#                 "prompt": prompt,
-#                 "max_tokens": MAX_OUTPUT_TOKENS,
-#                 "temperature": 0.7,  # Balanced creativity
-#                 "top_p": 0.9,  # Nucleus sampling for better responses
-#                 "context_length": MAX_CONTEXT_TOKENS,
-#             },
-#         )
-#         response_data = response.json()
-#         if response.status_code != 200:
-#             raise Exception(f"Error querying DeepSeek: {response_data}")
-#         return response_data["choices"][0]["text"]
-#     except Exception as e:
-#         print(f"Error querying DeepSeek: {e}")
-#         return None
 
 
 def query_deepseek(prompt):
@@ -52,7 +31,7 @@ def query_deepseek(prompt):
         "Content-Type": "application/json",
     }
     data = {
-        "model": "deepseek/deepseek-chat-v3-0324:free",
+        "model": "deepseek-chat",
         "messages": [
             {
                 "role": "system",
@@ -105,32 +84,6 @@ def query_deepseek(prompt):
         return json.dumps({"answer": f"An unexpected error occurred: {str(e)}"})
 
 
-# def query_deepseek_r1(prompt):
-#     """Send the prompt to DeepSeek R1 API and get the response."""
-#     try:
-#         response = requests.post(
-#             f"{deepseek_api_base}",
-#             headers={
-#                 "Authorization": f"Bearer {deepseek_api_key}",
-#                 "Content-Type": "application/json",
-#             },
-#             json={
-#                 "model": "deepseek/deepseek-r1:free",
-#                 "messages": [{"role": "user", "content": prompt}],
-#                 "max_tokens": MAX_OUTPUT_TOKENS,
-#                 "temperature": 0.7,  # Balanced creativity
-#                 "top_p": 0.9,  # Nucleus sampling for better responses
-#             },
-#         )
-#         response_data = response.json()
-#         if response.status_code != 200:
-#             raise Exception(f"Error querying DeepSeek R1: {response_data}")
-#         return response_data["choices"][0]["message"]["content"]
-#     except Exception as e:
-#         print(f"Error querying DeepSeek R1: {e}")
-#         return None
-
-
 def query_deepseek_r1(prompt):
     """Send the prompt to DeepSeek R1 API and get the response."""
     try:
@@ -141,7 +94,7 @@ def query_deepseek_r1(prompt):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "deepseek/deepseek-r1:free",
+                "model": "deepseek-reasoner",
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": MAX_OUTPUT_TOKENS,
                 "temperature": 0.7,
@@ -170,206 +123,81 @@ def query_deepseek_r1(prompt):
 
 def process_deepseek_response(response):
     """
-    Extracts the actual answer from DeepSeek's response, handling multiple formats and edge cases.
+    Extracts the answer text from DeepSeek's response.
+
+    Handles multiple formats:
+    - Direct dict: {"answer": "text"}
+    - JSON string: '{"answer": "text"}'
+    - Code blocks: ```json\n{"answer": "text"}\n```
+    - Nested JSON: {"answer": "{\"answer\": \"text\"}"}
+    - Empty/malformed responses
+
+    Args:
+        response: Response from DeepSeek API (dict, str, or None)
+
+    Returns:
+        str: Cleaned answer text or error message
     """
-    # Handle empty responses
+    EMPTY_RESPONSE_MSG = "I apologize, but I couldn't generate a proper response. Can you send that message again?"
+
+    # Handle None/empty
     if not response:
-        return "I apologize, but I couldn't generate a proper response. Can you send that message again?"
-
-    print(
-        f"Processing response type: {type(response)}, content: {str(response)[:200]}..."
-    )
-
-    # If we have an empty answer, return a default message
-    if response == '{"answer": ""}' or response == {"answer": ""}:
-        return "I apologize, but I couldn't generate a proper response. Can you send that message again?"
-
-        # Direct check for simple JSON object with just an answer key (your specific case)
-    if isinstance(response, dict) and len(response) == 1 and "answer" in response:
-        answer_text = response["answer"]
-        if isinstance(answer_text, str):
-            return answer_text.replace("*", "").strip()
-
-    # NEW CHECK: Handle the case where the response is a string representation of JSON with an answer key
-    if (
-        isinstance(response, str)
-        and response.strip().startswith("{")
-        and response.strip().endswith("}")
-    ):
-        try:
-            json_obj = json.loads(response)
-            if "answer" in json_obj:
-                answer_text = json_obj["answer"]
-                if isinstance(answer_text, str):
-                    return answer_text.replace("*", "").strip()
-        except json.JSONDecodeError:
-            pass
-
-    # Handle code block format (```json {...} ```)
-    if isinstance(response, str) and "```json" in response:
-        try:
-            # Extract content between ```json and ```
-            json_content = response.split("```json")[1].split("```")[0].strip()
-            parsed_json = json.loads(json_content)
-            if "answer" in parsed_json:
-                answer_text = parsed_json["answer"]
-                # Remove any asterisks
-                if isinstance(answer_text, str):
-                    answer_text = answer_text.replace("*", "")
-                    return answer_text.strip()
-        except:
-            pass
+        return EMPTY_RESPONSE_MSG
 
     try:
-        # If response is already a dictionary
+        # Convert to string for uniform processing
         if isinstance(response, dict):
-            if "answer" in response:
-                answer_content = response["answer"]
+            response = json.dumps(response)
 
-                # Check for code blocks in the answer string
-                if isinstance(answer_content, str) and "```json" in answer_content:
-                    try:
-                        # Extract content between ```json and ```
-                        json_content = (
-                            answer_content.split("```json")[1].split("```")[0].strip()
-                        )
-                        parsed_json = json.loads(json_content)
-                        if "answer" in parsed_json:
-                            answer_text = parsed_json["answer"]
-                            # Remove any asterisks
-                            if isinstance(answer_text, str):
-                                answer_text = answer_text.replace("*", "")
-                                return answer_text.strip()
-                    except:
-                        pass
+        response_str = str(response).strip()
 
-                if isinstance(answer_content, str):
-                    # Try to parse the answer as JSON if it looks like JSON
-                    if answer_content.strip().startswith(
-                        "{"
-                    ) and answer_content.strip().endswith("}"):
-                        try:
-                            inner_dict = json.loads(answer_content)
-                            if "answer" in inner_dict:
-                                answer_text = inner_dict["answer"]
-                                # Remove any asterisks
-                                if isinstance(answer_text, str):
-                                    answer_text = answer_text.replace("*", "")
-                                    return answer_text.strip()
-                        except:
-                            pass
-                    # Otherwise return it directly with asterisks removed
-                    answer_text = answer_content
-                    if isinstance(answer_text, str):
-                        answer_text = answer_text.replace("*", "")
-                        return answer_text.strip()
-                elif isinstance(answer_content, dict) and "answer" in answer_content:
-                    answer_text = answer_content["answer"]
-                    # Remove any asterisks
-                    if isinstance(answer_text, str):
-                        answer_text = answer_text.replace("**", "")
-                        return answer_text.strip()
+        if not response_str:
+            return EMPTY_RESPONSE_MSG
 
-            # If we get here, return the string representation with asterisks removed
-            result = str(response)
-            return result.replace("*", "").strip()
+        # Remove code block wrappers (```json ... ``` or ``` ... ```)
+        if response_str.startswith("```"):
+            lines = response_str.split("\n")
+            # Remove first line (```json or ```) and last line (```)
+            response_str = "\n".join(lines[1:-1]).strip()
 
-        # If response is a string
-        if isinstance(response, str):
-            # Check for empty content
-            if not response.strip():
-                return "I apologize, but I couldn't generate a proper response. Can you send that message again?"
+        # Try to parse as JSON (handles both direct JSON and nested JSON strings)
+        answer = response_str
+        max_depth = 3  # Prevent infinite loops on circular structures
 
-            # Try to parse it as JSON
-            try:
-                # Check if it's already a simple JSON string with just an answer key
-                if response.strip().startswith(
-                    '{"answer":'
-                ) and response.strip().endswith("}"):
-                    response_dict = json.loads(response)
-                    if "answer" in response_dict:
-                        answer_content = response_dict["answer"]
-                        # Extra check for empty answer
-                        if not answer_content or answer_content.strip() == "":
-                            return "I apologize, but I couldn't generate a proper response. Can you send that message again?"
-                        # Remove any asterisks
-                        if isinstance(answer_content, str):
-                            answer_content = answer_content.replace("*", "")
-                        return answer_content.strip()
-
-                # Otherwise proceed with normal parsing
-                response_dict = json.loads(response)
-
-                # If it has an answer key, process that
-                if "answer" in response_dict:
-                    answer_content = response_dict["answer"]
-
-                    # Extra check for empty answer
-                    if not answer_content or (
-                        isinstance(answer_content, str) and answer_content.strip() == ""
-                    ):
-                        return "I apologize, but I couldn't generate a proper response. Can you send that message again?"
-
-                    # Check for code blocks in the answer string
-                    if isinstance(answer_content, str) and "```json" in answer_content:
-                        try:
-                            # Extract content between ```json and ```
-                            json_content = (
-                                answer_content.split("```json")[1]
-                                .split("```")[0]
-                                .strip()
-                            )
-                            parsed_json = json.loads(json_content)
-                            if "answer" in parsed_json:
-                                answer_text = parsed_json["answer"]
-                                # Remove any asterisks
-                                if isinstance(answer_text, str):
-                                    answer_text = answer_text.replace("*", "")
-                                    return answer_text.strip()
-                        except:
-                            pass
-
-                    # If the answer is a string that looks like JSON
-                    if isinstance(
-                        answer_content, str
-                    ) and answer_content.strip().startswith("{"):
-                        try:
-                            inner_dict = json.loads(answer_content)
-                            if "answer" in inner_dict:
-                                answer_text = inner_dict["answer"]
-                                # Remove any asterisks
-                                if isinstance(answer_text, str):
-                                    answer_text = answer_text.replace("*", "")
-                                    return answer_text.strip()
-                        except:
-                            # If it fails to parse as JSON, return the string directly with asterisks removed
-                            if isinstance(answer_content, str):
-                                answer_content = answer_content.replace("*", "")
-                            return answer_content.strip()
-                    # If answer is already a dict
-                    elif (
-                        isinstance(answer_content, dict) and "answer" in answer_content
-                    ):
-                        answer_text = answer_content["answer"]
-                        # Remove any asterisks
-                        if isinstance(answer_text, str):
-                            answer_text = answer_text.replace("*", "")
-                            return answer_text.strip()
-                    # Otherwise return the answer string directly with asterisks removed
+        for _ in range(max_depth):
+            # If it looks like JSON, try to parse it
+            if answer.startswith("{") and answer.endswith("}"):
+                try:
+                    parsed = json.loads(answer)
+                    if isinstance(parsed, dict) and "answer" in parsed:
+                        answer = parsed["answer"]
+                        # If answer is still a dict/list, convert back to string
+                        if isinstance(answer, (dict, list)):
+                            answer = json.dumps(answer)
+                        continue
                     else:
-                        if isinstance(answer_content, str):
-                            answer_content = answer_content.replace("*", "")
-                        return answer_content.strip()
+                        # JSON parsed but no "answer" key, use the JSON string
+                        break
+                except json.JSONDecodeError:
+                    # Not valid JSON, treat as plain text
+                    break
+            else:
+                # Doesn't look like JSON, we're done
+                break
 
-                # Fallback: return a readable version if possible
-                return json.dumps(response_dict, indent=2).replace("*", "").strip()
+        # Final cleanup
+        answer = str(answer).strip()
 
-            except json.JSONDecodeError:
-                # If not JSON, return the raw string if it's not empty, with asterisks removed
-                if response.strip():
-                    return response.strip().replace("*", "")
+        # Remove markdown bold/italic formatting
+        answer = answer.replace("**", "").replace("*", "")
+
+        # Check if we ended up with empty content
+        if not answer or answer in ['""', "''", "{}", "[]"]:
+            return EMPTY_RESPONSE_MSG
+
+        return answer
 
     except Exception as e:
-        print(f"Error processing DeepSeek response: {e}\nResponse was: {response}")
-
-    return "I'm not sure how to answer that."
+        logger.error(f"Error processing DeepSeek response: {e}", exc_info=True)
+        logger.debug(f"Problematic response: {str(response)[:500]}")
+        return EMPTY_RESPONSE_MSG
